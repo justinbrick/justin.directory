@@ -1,13 +1,51 @@
 <!DOCTYPE html>
+<!-- Contact Information -->
 <html>
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Justin - Software Development</title>
+        <title>Justin - Contact</title>
         <link rel="stylesheet" href="../style.css">
+        <link rel="stylesheet" href="style.css">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com">
         <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300&display=swap" rel="stylesheet">    
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+        <style>
+            body {
+                text-align: center;
+                background-color: gray;
+                background-size:contain;
+                background-image: linear-gradient(to top, orange, black 70%);
+                font-family: "Fira Sans", sans-serif;
+                margin: 0;
+                height: 100vh;
+                overflow: hidden;
+            }
+        </style>
     </head>
+
+    <!-- TODO: Make the spacing on these a bit more readable, add shooting stars. -->
+    <body>
+        <div style="height: 100vh; width: 100vw; background-image: url(../resources/background.png); background-size: cover; position: fixed;">
+            <div style="height: 20vh; width: 100vw; margin: 10% 0 0 0; z-index: 1;">
+                <h1>Get in touch</h1>
+                <h2>If you're interested in contacting me for business or other, feel free to reach me through any of the platforms below.</h2> 
+            </div>
+            <div class="container">
+                <div style="display:inline-flex; height: 80%; margin: 2%;">
+                    <img src="../resources/discord.svg" style="height: 50%; aspect-ratio: 1; margin: 5%;"></img> 
+                    <p>Justin#1818</p>
+                </div>
+                <div style="display:inline-flex; height: 80%; margin: 2%;">
+                    <a href="https://github.com/justinbrick"><img src="../resources/github.png" style="height:50%; aspect-ratio: 1; margin: 5% 0;"></img></a>
+                    <a href="https://github.com/justinbrick"><p>Github</p></a>
+                </div>
+                <div style="display:inline-flex; height: 80%; margin: 2%;">
+                    <a href="mailto:justin@justin.directory"><img src="https://upload.wikimedia.org/wikipedia/commons/5/5d/Email_icon.png" height="32" width="40" style="height:50%; aspect-ratio: 1; margin: 5% 0;"></img></a>
+                    <a href="mailto:justin@justin.directory"><p>Mail</p></a>
+                </div>
+            </div>
+        </div> 
+    </body>
 </html>

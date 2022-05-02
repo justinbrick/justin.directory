@@ -1,0 +1,10 @@
+.container {
+    display: inline-flex;
+    width: 50%; 
+    height: 10vh; 
+    background-color: rgba(30,30,30,20); 
+    margin: 1% 25%; 
+    border-radius: 10px;
+    z-index: 1;
+    justify-content: space-evenly;
+}
