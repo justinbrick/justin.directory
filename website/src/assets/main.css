@@ -1,0 +1,26 @@
+@import './base.css';
+
+#app {
+  padding: 1rem 4rem;
+  font-weight: normal;
+}
+
+a {
+  text-decoration: none;
+  color: var(--justin-c-blue);
+  transition: 0.4s;
+  padding: 3px;
+}
+
+@media (prefers-color-scheme: dark) {
+  a {
+    color: var(--justin-c-orange);
+  }
+}
+
+@media (hover: hover) {
+  a:hover {
+    background-color: hsla(160, 100%, 37%, 0.2);
+  }
+}
+
