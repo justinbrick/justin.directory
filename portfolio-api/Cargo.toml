@@ -4,9 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+http = {version = "1.1.0"}
+lazy_static = "1.5.0"
+openid = { version = "0.15.0", features = ["microsoft"]}
 prost = "0.13.3"
-tokio = "1.41.1"
-tonic = "0.12.3"
+tokio = {version = "1.41.1", features = ["rt-multi-thread"]}
+tonic = {version = "0.12.3", features = ["tls"]}
+tonic-async-interceptor = "0.12.0"
 tower = "0.5.1"
 
 [build-dependencies]

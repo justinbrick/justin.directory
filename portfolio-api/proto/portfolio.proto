@@ -1,26 +1,24 @@
 syntax = "proto3";
 
-
 package directory.justin.portfolio;
 
 service Portfolio {
-    rpc GetSecureEducation(GetEducationRequest) returns (GetEducationResponse) {}
-
+    rpc GetEducation(Empty) returns (GetEducationResponse) {}
+    
 }
 
-message GetEducationRequest {
-    string user_id = 1;
-}
+message Empty {}
 
 message GetEducationResponse {
     repeated Education education = 1;
 }
 
+
 message Education {
-    string school = 1;
+    optional string school = 1;
     string degree = 2;
     string major = 3;
     string start_date = 4;
     string end_date = 5;
-    fixed32 gpa = 6;
+    double gpa = 6;
 }
