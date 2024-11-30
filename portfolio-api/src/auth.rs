@@ -6,7 +6,6 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use lazy_static::lazy_static;
 use openid::Client;
 use tonic::{Request, Response, Status};
 use tower::{Layer, Service};
@@ -47,7 +46,11 @@ pub async fn authenticate(
     client: Arc<Client>,
 ) -> Result<Request<()>, Status> {
     if let Some(auth) = req.metadata().get("authorization") {
-        let extensions = req.extensions_mut();
+        let token_str = auth
+            .to_str()
+            .map_err(|_| Status::unauthenticated("Invalid token"))?;
+
+        let token = jsonwebtoken::decode(token_str, key, validation);
     }
 
     Ok(req)

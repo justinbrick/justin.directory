@@ -11,16 +11,6 @@ mod portfolio;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Arc::new(
-        Client::discover(
-            "".into(),
-            None,
-            None,
-            "https://login.microsoftonline.com/".try_into().unwrap(),
-        )
-        .await
-        .unwrap(),
-    );
     let portfolio = PortfolioService {};
     let service = PortfolioServer::new(portfolio);
     let layer = tower::ServiceBuilder::new()

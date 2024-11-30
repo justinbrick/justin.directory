@@ -5,9 +5,10 @@ edition = "2021"
 
 [dependencies]
 http = {version = "1.1.0"}
-lazy_static = "1.5.0"
-openid = { version = "0.15.0", features = ["microsoft"]}
+jsonwebtoken = "9.3.0"
 prost = "0.13.3"
+serde = "1.0.215"
+serde_json = "1.0.133"
 tokio = {version = "1.41.1", features = ["rt-multi-thread"]}
 tonic = {version = "0.12.3", features = ["tls"]}
 tonic-async-interceptor = "0.12.0"
