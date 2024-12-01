@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use auth::authenticate;
+use auth::{authenticate, AuthHandler};
 use portfolio::{pb::portfolio_server::PortfolioServer, PortfolioService};
 use tonic::transport::Server;
 use tonic_async_interceptor::async_interceptor;
@@ -19,6 +19,8 @@ async fn authenticate_wrapper(
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let handler =
+        AuthHandler::new("https://login.microsoftonline.com/organizations/discovery/v2.0/keys");
     let portfolio = PortfolioService {};
     let service = PortfolioServer::new(portfolio);
     let layer = tower::ServiceBuilder::new()

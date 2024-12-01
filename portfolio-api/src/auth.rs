@@ -1,22 +1,13 @@
-use std::{
-    env,
-    fmt::Debug,
-    future::Future,
-    ops::{Deref, DerefMut},
-    pin::Pin,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
 use chrono::{DateTime, Utc};
-use http::Uri;
-use jsonwebtoken::{decode, jwk::JwkSet, Validation};
+use jsonwebtoken::{decode, jwk::JwkSet, DecodingKey, Validation};
 use reqwest::IntoUrl;
 use serde::{Deserialize, Serialize};
-use tonic::{Request, Response, Status};
-use tower::{Layer, Service};
+use tonic::{Request, Status};
 
 pub struct AuthHandler {
-    jwk_set_url: Uri,
+    jwk_set_url: String,
     jwk_set: Mutex<Option<JwkSet>>,
     last_refreshed: Mutex<DateTime<Utc>>,
     validation: Arc<Validation>,
@@ -30,7 +21,7 @@ async fn fetch_jwk_set<T: IntoUrl>(url: T) -> Result<JwkSet, Box<dyn std::error:
 }
 
 impl AuthHandler {
-    pub fn new(url: impl Into<Uri>) -> Self {
+    pub fn new(url: impl Into<String>) -> Self {
         Self {
             jwk_set_url: url.into(),
             jwk_set: Mutex::new(None),
@@ -52,14 +43,14 @@ impl AuthHandler {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct UserContext {
     email: String,
 }
 
 pub async fn authenticate(
     mut req: Request<()>,
-    jwk_set: Arc<JwkSet>,
+    jwk_set: JwkSet,
     validation: Arc<Validation>,
 ) -> Result<Request<()>, Status> {
     if let Some(auth) = req.metadata().get("authorization") {
@@ -67,9 +58,16 @@ pub async fn authenticate(
             .to_str()
             .map_err(|_| Status::unauthenticated("Invalid token"))?;
 
-        let token =
-            decode::<UserContext>(token_str, &jwk_set.keys.iter().find(predicate), &validation)
-                .map_err(|_| Status::unauthenticated("Invalid token"))?;
+        let token = jwk_set
+            .keys
+            .iter()
+            .find_map(|key| {
+                decode::<UserContext>(token_str, &DecodingKey::from_jwk(key).ok()?, &validation)
+                    .ok()
+            })
+            .ok_or_else(|| Status::unauthenticated("Invalid token"))?;
+
+        req.extensions_mut().insert(token.claims);
     }
 
     Ok(req)
