@@ -10,7 +10,7 @@ pub struct AuthHandler {
     jwk_set_url: String,
     jwk_set: Mutex<Option<JwkSet>>,
     last_refreshed: Mutex<DateTime<Utc>>,
-    validation: Arc<Validation>,
+    pub validation: Arc<Validation>,
 }
 
 async fn fetch_jwk_set<T: IntoUrl>(url: T) -> Result<JwkSet, Box<dyn std::error::Error>> {

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use auth::{authenticate, AuthHandler};
 use portfolio::{pb::portfolio_server::PortfolioServer, PortfolioService};
-use tonic::transport::Server;
+use tonic::{transport::Server, Status};
 use tonic_async_interceptor::async_interceptor;
 
 mod auth;
@@ -10,22 +10,26 @@ mod portfolio;
 
 async fn authenticate_wrapper(
     req: tonic::Request<()>,
+    handler: Arc<AuthHandler>,
 ) -> Result<tonic::Request<()>, tonic::Status> {
-    let jwk_set = Arc::new(client.jwk_set().await.unwrap());
-    let validation = Arc::new(client.validation().await.unwrap());
+    let jwk_set = handler
+        .jwk_set()
+        .await
+        .ok_or_else(|| Status::unauthenticated("No JWKSet"))?;
 
-    authenticate(req, jwk_set, validation).await
+    authenticate(req, jwk_set, handler.validation.clone()).await
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let handler =
-        AuthHandler::new("https://login.microsoftonline.com/organizations/discovery/v2.0/keys");
+    let handler = Arc::new(AuthHandler::new(
+        "https://login.microsoftonline.com/organizations/discovery/v2.0/keys",
+    ));
     let portfolio = PortfolioService {};
     let service = PortfolioServer::new(portfolio);
     let layer = tower::ServiceBuilder::new()
-        .layer(async_interceptor(|req: tonic::Request<()>| {
-            authenticate(req)
+        .layer(async_interceptor(move |req: tonic::Request<()>| {
+            authenticate_wrapper(req, handler.clone())
         }))
         .into_inner();
 
