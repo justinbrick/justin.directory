@@ -51,18 +51,13 @@ impl AuthHandler {
         let last_refreshed = self.last_refresh();
 
         if jwk_set.is_none() || last_refreshed.signed_duration_since(Utc::now()).num_hours() > 24 {
-            let Ok(res) = reqwest::get(self.jwk_set_url.clone()).await else {
-                return None;
-            };
-            let Ok(text) = res.text().await else {
-                return None;
-            };
-            let Ok(jwk_set) = serde_json::from_str(text.as_str()) else {
-                return None;
-            };
+            let res = reqwest::get(self.jwk_set_url.clone()).await.ok()?;
+            let text = res.text().await.ok()?;
+            let jwk_set = serde_json::from_str::<JwkSet>(text.as_str()).ok()?;
 
-            self.set_jwk_set(jwk_set);
+            self.set_jwk_set(jwk_set.clone());
             self.tick_last_refresh();
+            return Some(jwk_set);
         }
 
         jwk_set
