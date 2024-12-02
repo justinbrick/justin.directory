@@ -11,7 +11,7 @@ pub struct PortfolioService {}
 impl pb::portfolio_server::Portfolio for PortfolioService {
     async fn get_education(
         &self,
-        request: Request<Empty>,
+        _request: Request<Empty>,
     ) -> Result<Response<GetEducationResponse>, Status> {
         Ok(Response::new(GetEducationResponse {
             education: vec![Education {

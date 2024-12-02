@@ -66,7 +66,8 @@ impl AuthHandler {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct UserContext {
-    email: String,
+    sub: String,
+    oid: String,
 }
 
 pub async fn authenticate(
@@ -77,7 +78,7 @@ pub async fn authenticate(
         let jwk_set = handler
             .get_jwk_set()
             .await
-            .ok_or_else(|| Status::unauthenticated("No JWKSet"))?;
+            .ok_or_else(|| Status::internal("JWK Error"))?;
 
         let token_str = auth
             .to_str()

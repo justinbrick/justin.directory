@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use auth::{authenticate, AuthHandler};
 use portfolio::{pb::portfolio_server::PortfolioServer, PortfolioService};
-use tonic::{transport::Server, Status};
+use tonic::transport::Server;
 use tonic_async_interceptor::async_interceptor;
 
 mod auth;
