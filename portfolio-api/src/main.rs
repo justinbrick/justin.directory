@@ -8,18 +8,6 @@ use tonic_async_interceptor::async_interceptor;
 mod auth;
 mod portfolio;
 
-async fn authenticate_wrapper(
-    req: tonic::Request<()>,
-    handler: Arc<AuthHandler>,
-) -> Result<tonic::Request<()>, tonic::Status> {
-    let jwk_set = handler
-        .jwk_set()
-        .await
-        .ok_or_else(|| Status::unauthenticated("No JWKSet"))?;
-
-    authenticate(req, jwk_set, handler.validation.clone()).await
-}
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let handler = Arc::new(AuthHandler::new(
@@ -29,7 +17,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let service = PortfolioServer::new(portfolio);
     let layer = tower::ServiceBuilder::new()
         .layer(async_interceptor(move |req: tonic::Request<()>| {
-            authenticate_wrapper(req, handler.clone())
+            authenticate(req, handler.clone())
         }))
         .into_inner();
 

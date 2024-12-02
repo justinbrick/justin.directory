@@ -1,7 +1,11 @@
 use std::sync::{Arc, Mutex};
 
 use chrono::{DateTime, Utc};
-use jsonwebtoken::{decode, jwk::JwkSet, DecodingKey, Validation};
+use jsonwebtoken::{
+    decode,
+    jwk::{Jwk, JwkSet},
+    DecodingKey, Validation,
+};
 use reqwest::IntoUrl;
 use serde::{Deserialize, Serialize};
 use tonic::{Request, Status};
@@ -11,13 +15,6 @@ pub struct AuthHandler {
     jwk_set: Mutex<Option<JwkSet>>,
     last_refreshed: Mutex<DateTime<Utc>>,
     pub validation: Arc<Validation>,
-}
-
-async fn fetch_jwk_set<T: IntoUrl>(url: T) -> Result<JwkSet, Box<dyn std::error::Error>> {
-    let res = reqwest::get(url).await?;
-    let text = res.text().await?;
-
-    Ok(serde_json::from_str(text.as_str())?)
 }
 
 impl AuthHandler {
@@ -30,16 +27,45 @@ impl AuthHandler {
         }
     }
 
-    pub async fn jwk_set(&self) -> Option<JwkSet> {
-        let mut jwk_set = self.jwk_set.lock().unwrap();
-        let mut last_refreshed = self.last_refreshed.lock().unwrap();
+    fn set_jwk_set(&self, jwk_set: JwkSet) {
+        *self.jwk_set.lock().unwrap() = Some(jwk_set);
+    }
+
+    fn tick_last_refresh(&self) {
+        *self.last_refreshed.lock().unwrap() = Utc::now();
+    }
+
+    fn last_refresh(&self) -> DateTime<Utc> {
+        *self.last_refreshed.lock().unwrap()
+    }
+
+    fn jwk_set(&self) -> Option<JwkSet> {
+        self.jwk_set.lock().unwrap().clone()
+    }
+
+    pub async fn get_jwk_set(&self) -> Option<JwkSet> {
+        // as i understand, after reading docs, this is not ideal.
+        // i can do this lock-free using thread local, but don't want to take the time to do it.
+        // please note if you are reading this, i would do this differently had i more time to spend on this.
+        let jwk_set = self.jwk_set();
+        let last_refreshed = self.last_refresh();
 
         if jwk_set.is_none() || last_refreshed.signed_duration_since(Utc::now()).num_hours() > 24 {
-            *jwk_set = Some(fetch_jwk_set(self.jwk_set_url.to_string()).await.unwrap());
-            *last_refreshed = Utc::now();
+            let Ok(res) = reqwest::get(self.jwk_set_url.clone()).await else {
+                return None;
+            };
+            let Ok(text) = res.text().await else {
+                return None;
+            };
+            let Ok(jwk_set) = serde_json::from_str(text.as_str()) else {
+                return None;
+            };
+
+            self.set_jwk_set(jwk_set);
+            self.tick_last_refresh();
         }
 
-        jwk_set.clone()
+        jwk_set
     }
 }
 
@@ -50,10 +76,14 @@ struct UserContext {
 
 pub async fn authenticate(
     mut req: Request<()>,
-    jwk_set: JwkSet,
-    validation: Arc<Validation>,
+    handler: Arc<AuthHandler>,
 ) -> Result<Request<()>, Status> {
     if let Some(auth) = req.metadata().get("authorization") {
+        let jwk_set = handler
+            .get_jwk_set()
+            .await
+            .ok_or_else(|| Status::unauthenticated("No JWKSet"))?;
+
         let token_str = auth
             .to_str()
             .map_err(|_| Status::unauthenticated("Invalid token"))?;
@@ -62,8 +92,12 @@ pub async fn authenticate(
             .keys
             .iter()
             .find_map(|key| {
-                decode::<UserContext>(token_str, &DecodingKey::from_jwk(key).ok()?, &validation)
-                    .ok()
+                decode::<UserContext>(
+                    token_str,
+                    &DecodingKey::from_jwk(key).ok()?,
+                    &handler.validation,
+                )
+                .ok()
             })
             .ok_or_else(|| Status::unauthenticated("Invalid token"))?;
 
