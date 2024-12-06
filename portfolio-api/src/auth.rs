@@ -6,9 +6,7 @@ use jsonwebtoken::{
     jwk::{Jwk, JwkSet},
     DecodingKey, Validation,
 };
-use reqwest::IntoUrl;
 use serde::{Deserialize, Serialize};
-use tonic::{Request, Status};
 
 pub struct AuthHandler {
     jwk_set_url: String,
@@ -16,6 +14,9 @@ pub struct AuthHandler {
     last_refreshed: Mutex<DateTime<Utc>>,
     pub validation: Arc<Validation>,
 }
+
+#[derive(Clone)]
+pub struct AuthenticationService {}
 
 impl AuthHandler {
     pub fn new(url: impl Into<String>) -> Self {
@@ -68,37 +69,4 @@ impl AuthHandler {
 struct UserContext {
     sub: String,
     oid: String,
-}
-
-pub async fn authenticate(
-    mut req: Request<()>,
-    handler: Arc<AuthHandler>,
-) -> Result<Request<()>, Status> {
-    if let Some(auth) = req.metadata().get("authorization") {
-        let jwk_set = handler
-            .get_jwk_set()
-            .await
-            .ok_or_else(|| Status::internal("JWK Error"))?;
-
-        let token_str = auth
-            .to_str()
-            .map_err(|_| Status::unauthenticated("Invalid token"))?;
-
-        let token = jwk_set
-            .keys
-            .iter()
-            .find_map(|key| {
-                decode::<UserContext>(
-                    token_str,
-                    &DecodingKey::from_jwk(key).ok()?,
-                    &handler.validation,
-                )
-                .ok()
-            })
-            .ok_or_else(|| Status::unauthenticated("Invalid token"))?;
-
-        req.extensions_mut().insert(token.claims);
-    }
-
-    Ok(req)
 }
