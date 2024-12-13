@@ -8,6 +8,7 @@ use tower_http::{
     auth::AsyncRequireAuthorizationLayer, compression::CompressionLayer, timeout::TimeoutLayer,
     trace::TraceLayer,
 };
+use tracing::info;
 
 #[derive(Clone)]
 pub struct AppState {}
@@ -33,6 +34,7 @@ async fn main() {
             ))),
     );
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    info!("Listening on: {}", listener.local_addr().unwrap());
 
     axum::serve(listener, router).await.unwrap();
 }

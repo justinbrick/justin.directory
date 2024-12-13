@@ -14,7 +14,23 @@ struct Education {
 }
 
 #[axum_macros::debug_handler]
-async fn get_educations(User(context): User) -> Json<Vec<Education>> {
+async fn get_educations(maybe_user: Option<User>) -> Json<Vec<Education>> {
+    if let Some(User(_user)) = maybe_user {
+        return Json(vec![
+            Education {
+                school: Some("University of Washington".to_string()),
+                degree: "Bachelor of Science in Computer Science".to_string(),
+                from: Utc::now(),
+                to: Utc::now(),
+            },
+            Education {
+                school: Some("University of Washington".to_string()),
+                degree: "Master of Science in Computer Science".to_string(),
+                from: Utc::now(),
+                to: Utc::now(),
+            },
+        ]);
+    }
     Json(vec![
         Education {
             school: Some("University of Washington".to_string()),
