@@ -28,6 +28,7 @@ async fn main() {
             validation
         },
     ));
+
     let router = Router::new().route_education().layer(
         ServiceBuilder::new()
             .layer(TraceLayer::new_for_http())
