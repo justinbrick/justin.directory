@@ -44,32 +44,6 @@
   --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
 }
 
-.c-primary {
-  color: var(--justin-c-blue);
-}
-
-.c-secondary {
-  color: var(--justin-c-pink);
-}
-
-.c-tertiary {
-  color: var(--justin-c-green);
-}
-
-@media (prefers-color-scheme: dark) {
-  .c-primary {
-    color: var(--justin-c-orange);
-  }
-
-  .c-secondary {
-    color: var(--justin-c-mint-green);
-  }
-
-  .c-tertiary {
-    color: var(--justin-c-purple);
-  }
-}
-
 /* semantic color variables for this project */
 :root {
   --color-background: var(--vt-c-white);
@@ -81,6 +55,10 @@
 
   --color-heading: var(--vt-c-text-light-1);
   --color-text: var(--vt-c-text-light-1);
+
+  --color-primary: var(--justin-c-blue);
+  --color-secondary: var(--justin-c-pink);
+  --color-tertiary: var(--justin-c-green);
 
   --section-gap: 160px;
 }
@@ -96,6 +74,10 @@
 
     --color-heading: var(--vt-c-text-dark-1);
     --color-text: var(--vt-c-text-dark-2);
+
+    --color-primary: var(--justin-c-orange);
+    --color-secondary: var(--justin-c-mint-green);
+    --color-tertiary: var(--justin-c-purple);
   }
 }
 
@@ -132,4 +114,18 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+h1, h2, h3, h4, h5, h6, button {
+  color: var(--color-heading);
+}
+
+button {
+  background-color: var(--color-primary);
+  border: none;
 }

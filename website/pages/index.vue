@@ -10,7 +10,7 @@ useSeoMeta({
 </script>
 
 <template>
-    <div>
+    <main>
         <h1>Test</h1>
-    </div>
+    </main>
 </template>
