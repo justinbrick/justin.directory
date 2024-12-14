@@ -1,6 +1,4 @@
 use std::{
-    borrow::{Borrow, BorrowMut},
-    cell::{Cell, RefCell},
     future::{Future, IntoFuture},
     pin::Pin,
     sync::{Arc, Mutex},
@@ -14,13 +12,8 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use http::{request::Parts, HeaderValue, StatusCode};
-use jsonwebtoken::{
-    decode,
-    jwk::{Jwk, JwkSet},
-    DecodingKey, Validation,
-};
+use jsonwebtoken::{decode, jwk::JwkSet, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
-use tower::{Layer, Service};
 use tower_http::auth::AsyncAuthorizeRequest;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
