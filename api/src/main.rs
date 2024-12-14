@@ -1,8 +1,9 @@
-use std::{sync::Arc, time::Duration};
+use std::{env, sync::Arc, time::Duration};
 
 use auth::MicrosoftAuth;
 use axum::Router;
 use education::EducationRoutable;
+use jsonwebtoken::Validation;
 use tower::ServiceBuilder;
 use tower_http::{
     auth::AsyncRequireAuthorizationLayer, compression::CompressionLayer, timeout::TimeoutLayer,
@@ -17,12 +18,15 @@ mod auth;
 mod education;
 #[tokio::main]
 async fn main() {
-    // key discovery route "https://login.microsoftonline.com/organizations/discovery/v2.0/keys",
-
     tracing_subscriber::fmt::init();
 
     let auth = Arc::new(auth::AuthHandler::new(
         "https://login.microsoftonline.com/organizations/discovery/v2.0/keys",
+        {
+            let mut validation = Validation::new(jsonwebtoken::Algorithm::RS256);
+            validation.set_audience(&["11ec9395-8c5d-4ac7-9bc2-f4505e7053cf"]);
+            validation
+        },
     ));
     let router = Router::new().route_education().layer(
         ServiceBuilder::new()

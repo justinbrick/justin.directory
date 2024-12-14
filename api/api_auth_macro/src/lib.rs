@@ -1,5 +1,5 @@
 use proc_macro::TokenStream;
-use syn::{parse::Parse, parse_macro_input, visit_mut::VisitMut, Attribute, Ident, ItemFn, LitStr};
+use syn::{parse::Parse, parse_macro_input, visit_mut::VisitMut, ItemFn, LitStr};
 
 struct Scope {
     scopes: Vec<String>,

@@ -52,12 +52,12 @@ pub struct AuthHandler {
 }
 
 impl AuthHandler {
-    pub fn new(url: impl Into<String>) -> Self {
+    pub fn new(url: impl Into<String>, validation: Validation) -> Self {
         Self {
             jwk_set_url: url.into(),
             jwk_set: Mutex::new(None),
             last_refreshed: Mutex::new(DateTime::<Utc>::MIN_UTC),
-            validation: Arc::new(Validation::new(jsonwebtoken::Algorithm::RS256)),
+            validation: Arc::new(validation),
         }
     }
 
