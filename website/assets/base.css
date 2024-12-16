@@ -55,6 +55,7 @@
 
   --color-heading: var(--vt-c-text-light-1);
   --color-text: var(--vt-c-text-light-1);
+  --color-text-inverted: var(--vt-c-text-dark-1);
 
   --color-primary: var(--justin-c-blue);
   --color-secondary: var(--justin-c-pink);
@@ -74,6 +75,7 @@
 
     --color-heading: var(--vt-c-text-dark-1);
     --color-text: var(--vt-c-text-dark-2);
+    --color-text-inverted: var(--vt-c-white);
 
     --color-primary: var(--justin-c-orange);
     --color-secondary: var(--justin-c-mint-green);
@@ -127,5 +129,11 @@ h1, h2, h3, h4, h5, h6, button {
 
 button {
   background-color: var(--color-primary);
+  color: var(--color-text-inverted);
   border: none;
+}
+
+button:hover {
+  filter: brightness(1.3);
+  cursor: pointer;
 }
