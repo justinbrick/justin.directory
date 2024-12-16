@@ -1,42 +1,30 @@
 <script setup lang="ts">
+import { useSeoMeta } from '#imports';
 import { navigateTo, useRoute } from '#app';
-import { OAuth2Client } from '@badgateway/oauth2-client';
-import { inject, onMounted, ref, watch, type Ref } from 'vue';
+import { onMounted } from 'vue';
+import { inject, ref, watch } from 'vue';
+import type { OAuth2Provider } from '~/composables/auth';
 
-const oauth2 = inject<OAuth2Client>('oauth2')!;
-const codeVerifier = inject<Ref<string | undefined>>('codeVerifier')!;
+useSeoMeta({
+    title: 'Authentication',
+    description: 'Page for authentication',
+    author: 'Justin'
+});
+
+const oauth2 = inject<OAuth2Provider>('oauth2')!;
 const route = useRoute();
-const token = ref<string>('');
 
-watch([codeVerifier, route.query], async ([verifier, query]) => {
-    if (!verifier || !query.code) {
+
+onMounted(async () => {
+    if (!route.query.code) {
         return;
     }
 
-    try {
-        const tokenResponse = await oauth2.authorizationCode.getTokenFromCodeRedirect(
-            window.location.href,
-            {
-                codeVerifier: verifier,
-                redirectUri: window.location.origin + '/auth',
-            }
-        )
-
-
-        token.value = tokenResponse.accessToken;
-    } catch (e) {
-        console.error(e);
-    }
-
-    await navigateTo('/');
+    await oauth2.tokenCallback();
 })
 
 async function loginAuthorization() {
-    window.location.href = await oauth2.authorizationCode.getAuthorizeUri({
-        redirectUri: window.location.origin + '/auth',
-        codeVerifier: codeVerifier.value,
-        scope: ['openid', 'profile', 'email'],
-    })
+    await oauth2.login(['openid', 'profile', 'email']);
 }
 </script>
 
@@ -44,8 +32,6 @@ async function loginAuthorization() {
 <template>
     <main>
         <h1>Auth Page</h1>
-        <p>Code Verifier: {{ codeVerifier }}</p>
-        <p>Access Token: {{ token }}</p>
         <button @click="loginAuthorization">Login</button>
     </main>
 </template>
