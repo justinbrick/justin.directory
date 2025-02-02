@@ -14,7 +14,6 @@ useSeoMeta({
 const oauth2 = inject<OAuth2Provider>('oauth2')!;
 const route = useRoute();
 
-
 onMounted(async () => {
     if (!route.query.code) {
         return;
@@ -28,10 +27,7 @@ async function loginAuthorization() {
 }
 </script>
 
-
 <template>
-    <main>
-        <h1>Auth Page</h1>
-        <button @click="loginAuthorization">Login</button>
-    </main>
+    <h1>Auth Page</h1>
+    <button @click="loginAuthorization">Login</button>
 </template>

@@ -23,8 +23,11 @@ provide('oauth2', oauth2);
     <NavBar />
   </header>
   <NuxtRouteAnnouncer />
-  <NuxtPage />
+  <main>
+    <NuxtPage />
+  </main>
 </template>
+
 
 <style lang="css">
 @import url('./assets/base.css');

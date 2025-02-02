@@ -27,33 +27,10 @@ export class OAuth2Provider {
 
   constructor(settings: ProviderSettings) {
     const self = this;
-    const redirectUri = window.location.origin + settings.callbackPath;
     const client = new OAuth2Client(settings);
     this._settings = settings;
     this._client = client;
 
-    const fetcher = new OAuth2Fetch({
-      client: this._client,
-      storeToken: (token) => {
-        window.localStorage.setItem(`${settings.providerName}_token`, JSON.stringify(token));
-      },
-      getStoredToken() {
-        const tokenString = window.localStorage.getItem(`${settings.providerName}_token`);
-        if (tokenString) {
-          return JSON.parse(tokenString);
-        }
-        return null;
-      },
-      async getNewToken() {
-        return await client.authorizationCode.getToken({
-          redirectUri,
-          codeVerifier: await self.getCodeVerifier(),
-          code: new URL(window.location.href).searchParams.get('code') || '',
-        });
-      },
-      onError(err: Error) {
-      },
-    })
   }
 
   async tokenCallback(navigator?: (url: string) => void) {
@@ -163,6 +140,16 @@ export class OAuth2Provider {
       this._state = window.sessionStorage.getItem(`${name}_state`) || undefined;
     }
     return this._state;
+  }
+
+  get fetcher(): OAuth2Fetch {
+    const self = this;
+    return new OAuth2Fetch({
+      client: this._client,
+      getNewToken() {
+        return self.token;
+      }
+    })
   }
 }
 
