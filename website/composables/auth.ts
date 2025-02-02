@@ -1,6 +1,6 @@
-import { generateCodeVerifier, OAuth2Client, type OAuth2Token } from "@badgateway/oauth2-client";
+import { generateCodeVerifier, OAuth2Client, OAuth2Fetch, type OAuth2Token } from "@badgateway/oauth2-client";
 import type { ClientSettings } from "@badgateway/oauth2-client/dist/client";
-import { onMounted } from "vue";
+import { onMounted, ref, type Ref } from "vue";
 
 export type ProviderSettings = ClientSettings & {
   /**
@@ -23,10 +23,37 @@ export class OAuth2Provider {
   private _codeVerifier?: string;
   private _settings: ProviderSettings;
   private _state?: string;
+  accessToken: Ref<string | null> = ref(null);
 
   constructor(settings: ProviderSettings) {
+    const self = this;
+    const redirectUri = window.location.origin + settings.callbackPath;
+    const client = new OAuth2Client(settings);
     this._settings = settings;
-    this._client = new OAuth2Client(settings)
+    this._client = client;
+
+    const fetcher = new OAuth2Fetch({
+      client: this._client,
+      storeToken: (token) => {
+        window.localStorage.setItem(`${settings.providerName}_token`, JSON.stringify(token));
+      },
+      getStoredToken() {
+        const tokenString = window.localStorage.getItem(`${settings.providerName}_token`);
+        if (tokenString) {
+          return JSON.parse(tokenString);
+        }
+        return null;
+      },
+      async getNewToken() {
+        return await client.authorizationCode.getToken({
+          redirectUri,
+          codeVerifier: await self.getCodeVerifier(),
+          code: new URL(window.location.href).searchParams.get('code') || '',
+        });
+      },
+      onError(err: Error) {
+      },
+    })
   }
 
   async tokenCallback(navigator?: (url: string) => void) {
@@ -36,10 +63,12 @@ export class OAuth2Provider {
       {
         codeVerifier: await this.getCodeVerifier(),
         redirectUri: window.location.origin + callbackPath,
+        state: this.state,
       }
     )
 
     this.token = token;
+    this.state = null;
     const continueTo = this.continueTo;
     window.history.replaceState(null, '', continueTo);
     if (navigator) {
@@ -50,6 +79,8 @@ export class OAuth2Provider {
   }
 
   async login(scopes: string[]) {
+    // is this safe? i feel like it would be, but I don't know. womp.
+    this.state = await generateCodeVerifier();
     window.location.href = await this._client.authorizationCode.getAuthorizeUri({
       codeVerifier: await this.getCodeVerifier(),
       redirectUri: window.location.origin + this._settings.callbackPath,
@@ -114,22 +145,22 @@ export class OAuth2Provider {
     return token || null;
   }
 
-  set state(state: string | null) {
+  private set state(state: string | null) {
     const name = this._settings.providerName;
-    if (!state) {
+    if (state === null) {
       delete this._state;
-      window.localStorage.removeItem(`${name}_state`);
+      window.sessionStorage.removeItem(`${name}_state`);
       return;
     }
 
     this._state = state;
-    window.localStorage.setItem(`${name}_state`, state);
+    window.sessionStorage.setItem(`${name}_state`, state);
   }
 
   get state(): string | undefined {
     const name = this._settings.providerName;
     if (!this._state) {
-      this._state = window.localStorage.getItem(`${name}_state`) || undefined;
+      this._state = window.sessionStorage.getItem(`${name}_state`) || undefined;
     }
     return this._state;
   }

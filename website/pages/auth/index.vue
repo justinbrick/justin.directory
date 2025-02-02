@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useSeoMeta } from '#imports';
-import { navigateTo, useRoute } from '#app';
+import { useRoute } from '#app';
 import { onMounted } from 'vue';
-import { inject, ref, watch } from 'vue';
+import { inject } from 'vue';
 import type { OAuth2Provider } from '~/composables/auth';
 
 useSeoMeta({
