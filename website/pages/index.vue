@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useSeoMeta } from 'unhead';
 
-
 useSeoMeta({
     author: 'Justin',
     description: 'A personal portfolio',
@@ -12,10 +11,10 @@ useSeoMeta({
 <template>
     <main>
         <div class="primary">
-            <h1 class="section-area">Education</h1>
+            <h1 class="section-title">Education</h1>
         </div>
         <div class="other">
-            <h1 class="section-area">Skills</h1>
+            <h1 class="section-title">Skills</h1>
         </div>
     </main>
 </template>
@@ -41,8 +40,16 @@ main {
     flex-grow: 1;
 }
 
-.section-area {
+.section-title {
     padding-left: 1rem;
     color: var(--color-primary);
+}
+
+.section-title::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 1px;
+    background-color: var(--color-primary);
 }
 </style>
