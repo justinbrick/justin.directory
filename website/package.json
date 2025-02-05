@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@badgateway/oauth2-client": "^2.4.2",
-    "nuxt": "^3.14.1592",
+    "nuxt": "^3.15.4",
     "vue": "latest",
-    "vue-router": "latest"
+    "vue-router": "^4.5.0"
   }
 }
