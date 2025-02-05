@@ -5,7 +5,7 @@ useSeoMeta({
     author: 'Justin',
     description: 'A personal portfolio',
     title: 'Justin\'s Portfolio',
-})
+});
 </script>
 
 <template>
@@ -42,6 +42,7 @@ main {
 
 .section-title {
     padding-left: 1rem;
+    padding-right: 1rem;
     color: var(--color-primary);
 }
 
