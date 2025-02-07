@@ -38,6 +38,7 @@ version = "0.1.0"
 dependencies = [
  "api_auth_macro",
  "aws-config",
+ "aws-sdk-config",
  "aws-sdk-dynamodb",
  "aws-sdk-secretsmanager",
  "axum",
@@ -165,6 +166,28 @@ dependencies = [
  "pin-project-lite",
  "tracing",
  "uuid",
+]
+
+[[package]]
+name = "aws-sdk-config"
+version = "1.53.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "98527939c44ce0a24bbb05fc6fdd44bfdd8e3947b10dbb4c19ce9533d3552bc2"
+dependencies = [
+ "aws-credential-types",
+ "aws-runtime",
+ "aws-smithy-async",
+ "aws-smithy-http",
+ "aws-smithy-json 0.61.1",
+ "aws-smithy-runtime",
+ "aws-smithy-runtime-api",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "http 0.2.12",
+ "once_cell",
+ "regex-lite",
+ "tracing",
 ]
 
 [[package]]

@@ -1,8 +1,8 @@
-use axum::{routing::get, Json, Router};
+use axum::{extract::State, routing::get, Json, Router};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::auth::User;
+use crate::{auth::User, AppState, PORTFOLIO_TABLE};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Education {
@@ -14,7 +14,18 @@ struct Education {
 }
 
 #[axum_macros::debug_handler]
-async fn get_educations(maybe_user: Option<User>) -> Json<Vec<Education>> {
+async fn get_educations(
+    maybe_user: Option<User>,
+    State(AppState { dynamo }): State<AppState>,
+) -> Json<Vec<Education>> {
+    let educations = dynamo
+        .query()
+        .table_name(PORTFOLIO_TABLE)
+        .key_condition_expression("#r = :r")
+        .expression_attribute_names("#r", "resource")
+        .send()
+        .await;
+
     if let Some(User(_user)) = maybe_user {
         return Json(vec![
             Education {
@@ -51,7 +62,10 @@ pub trait EducationRoutable {
     fn route_education(self) -> Self;
 }
 
-impl EducationRoutable for Router {
+impl<T> EducationRoutable for Router<T>
+where
+    T: Send + Clone + Sync + 'static,
+{
     fn route_education(self) -> Self {
         self.route("/education", get(get_educations))
     }
