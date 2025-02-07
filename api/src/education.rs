@@ -1,3 +1,4 @@
+use aws_sdk_dynamodb::types::AttributeValue;
 use axum::{extract::State, routing::get, Json, Router};
 use chrono::{DateTime, Utc};
 use http::StatusCode;
@@ -22,12 +23,16 @@ async fn get_educations(
     let educations = dynamo
         .query()
         .table_name(PORTFOLIO_TABLE)
-        .key_condition_expression("#r = :r")
-        .expression_attribute_names("#r", "resource")
+        .key_condition_expression("#res = :res")
+        .expression_attribute_names("#res", "resource")
+        .expression_attribute_values(":res", AttributeValue::S("education".to_string()))
         .send()
         .await
         .map_err(|err| {
             tracing::error!("failed to query dynamo: {err}");
+            if let Some(body) = err.raw_response().map(|res| res.body()) {
+                tracing::error!("error response: {:?}", body);
+            }
             (StatusCode::INTERNAL_SERVER_ERROR, "failed to query dynamo")
         })?;
 
