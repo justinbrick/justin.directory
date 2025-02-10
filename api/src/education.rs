@@ -3,12 +3,16 @@ use axum::{extract::State, routing::get, Json, Router};
 use chrono::{DateTime, Utc};
 use http::StatusCode;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use uuid::{Timestamp, Uuid};
 
 use crate::{auth::User, AppState, PORTFOLIO_TABLE};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct Education {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    resource: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    target: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none")]
     id: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -16,6 +20,18 @@ struct Education {
     degree: String,
     from: DateTime<Utc>,
     to: DateTime<Utc>,
+}
+
+impl Education {
+    fn with_dynamo_fields(&self) -> Self {
+        let mut education = self.clone();
+
+        education.id = education.id.or(Some(Uuid::now_v7()));
+        education.resource = Some("education".to_string());
+        education.target = education.id.clone();
+
+        education
+    }
 }
 
 #[axum_macros::debug_handler]
@@ -72,8 +88,35 @@ async fn get_educations(
 async fn add_education(
     User(user): User,
     State(AppState { dynamo }): State<AppState>,
-    Json(education): Json<Education>,
+    Json(mut education): Json<Education>,
 ) -> Result<Json<Education>, (StatusCode, &'static str)> {
+    education.id = Some(Uuid::now_v7());
+    let dynamo_education = education.with_dynamo_fields();
+    let item = serde_dynamo::to_item(dynamo_education).map_err(|err| {
+        tracing::error!("failed to serialize education: {err}");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "failed to serialize education",
+        )
+    })?;
+
+    dynamo
+        .put_item()
+        .table_name(PORTFOLIO_TABLE)
+        .set_item(Some(item))
+        .send()
+        .await
+        .map_err(|err| {
+            tracing::error!("failed to put item in dynamo: {err}");
+            if let Some(body) = err.raw_response().map(|res| res.body()) {
+                tracing::error!("error response: {:?}", body);
+            }
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "failed to put item in dynamo",
+            )
+        })?;
+
     return Ok(Json(education));
 }
 
