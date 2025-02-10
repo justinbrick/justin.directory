@@ -23,3 +23,4 @@ serde_dynamo = {version = "4.2.14", features = ["aws-sdk-dynamodb+1"]}
 aws-sdk-secretsmanager = "1.54.0"
 aws-config = "1.5.10"
 aws-sdk-config = "1.53.0"
+uuid = { version = "1.13.1", features = ["serde"] }

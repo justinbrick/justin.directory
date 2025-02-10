@@ -3,11 +3,14 @@ use axum::{extract::State, routing::get, Json, Router};
 use chrono::{DateTime, Utc};
 use http::StatusCode;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::{auth::User, AppState, PORTFOLIO_TABLE};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Education {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    id: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none")]
     school: Option<String>,
     degree: String,
@@ -64,12 +67,22 @@ async fn get_educations(
     ))
 }
 
+#[axum_macros::debug_handler]
+/// Adds education to the database
+async fn add_education(
+    User(user): User,
+    State(AppState { dynamo }): State<AppState>,
+    Json(education): Json<Education>,
+) -> Result<Json<Education>, (StatusCode, &'static str)> {
+    return Ok(Json(education));
+}
+
 pub trait EducationRoutable {
     fn route_education(self) -> Self;
 }
 
 impl EducationRoutable for Router<AppState> {
     fn route_education(self) -> Self {
-        self.route("/education", get(get_educations))
+        self.route("/education", get(get_educations).post(add_education))
     }
 }
