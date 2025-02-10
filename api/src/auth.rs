@@ -37,7 +37,10 @@ where
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         let Some(context) = parts.extensions.get::<UserContext>() else {
-            return Err((StatusCode::UNAUTHORIZED, "user not signed in"));
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                "you must be signed in to use this endpoint",
+            ));
         };
 
         Ok(User(context.clone()))
