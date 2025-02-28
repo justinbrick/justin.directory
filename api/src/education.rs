@@ -1,18 +1,46 @@
+use api_auth_macro::require_scope;
 use aws_sdk_dynamodb::types::AttributeValue;
 use axum::{extract::State, routing::get, Json, Router};
 use chrono::{DateTime, Utc};
 use http::StatusCode;
 use serde::{Deserialize, Serialize};
-use uuid::{Timestamp, Uuid};
+use uuid::Uuid;
 
 use crate::{auth::User, AppState, PORTFOLIO_TABLE};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+struct DynamoEducation {
+    resource: String,
+    target: Uuid,
+    education: Education,
+}
+
+impl DynamoEducation {
+    fn new(mut education: Education) -> Self {
+        let id = match education.id {
+            Some(id) => id,
+            None => Uuid::new_v4(),
+        };
+        let resource = "education".to_string();
+        let target = id;
+        education.id = Some(id);
+
+        Self {
+            resource,
+            target,
+            education,
+        }
+    }
+}
+
+impl From<DynamoEducation> for Education {
+    fn from(dynamo_education: DynamoEducation) -> Self {
+        dynamo_education.education
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct Education {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    resource: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    target: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none")]
     id: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -23,18 +51,14 @@ struct Education {
 }
 
 impl Education {
-    fn with_dynamo_fields(&self) -> Self {
-        let mut education = self.clone();
-
-        education.id = education.id.or(Some(Uuid::now_v7()));
-        education.resource = Some("education".to_string());
-        education.target = education.id.clone();
-
-        education
+    fn redact(mut self) -> Self {
+        self.school = None;
+        self
     }
 }
 
 #[axum_macros::debug_handler]
+#[require_scope("education:read")]
 async fn get_educations(
     maybe_user: Option<User>,
     State(AppState { dynamo }): State<AppState>,
@@ -60,38 +84,35 @@ async fn get_educations(
         return Ok(Json(vec![]));
     };
 
-    let educations: Vec<Education> = serde_dynamo::from_items(items).map_err(|err| {
-        tracing::error!("failed to parse dynamo response: {err}");
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "failed to parse dynamo response",
-        )
-    })?;
+    let educations: Vec<Education> = serde_dynamo::from_items::<_, DynamoEducation>(items)
+        .map_err(|err| {
+            tracing::error!("failed to parse dynamo response: {err}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "failed to parse dynamo response",
+            )
+        })?
+        .into_iter()
+        .map(Education::from)
+        .collect();
 
-    if let Some(User(_user)) = maybe_user {
-        return Ok(Json(educations));
+    match maybe_user {
+        Some(User(_)) => Ok(Json(educations)),
+        None => Ok(Json(
+            educations.into_iter().map(Education::redact).collect(),
+        )),
     }
-
-    Ok(Json(
-        educations
-            .into_iter()
-            .map(|mut education| {
-                education.school = None;
-                education
-            })
-            .collect(),
-    ))
 }
 
 #[axum_macros::debug_handler]
 /// Adds education to the database
 async fn add_education(
-    User(user): User,
+    User(_user): User,
     State(AppState { dynamo }): State<AppState>,
-    Json(mut education): Json<Education>,
+    Json(education): Json<Education>,
 ) -> Result<Json<Education>, (StatusCode, &'static str)> {
-    education.id = Some(Uuid::now_v7());
-    let dynamo_education = education.with_dynamo_fields();
+    let dynamo_education = DynamoEducation::new(education);
+    let education = dynamo_education.education.clone();
     let item = serde_dynamo::to_item(dynamo_education).map_err(|err| {
         tracing::error!("failed to serialize education: {err}");
         (
@@ -117,7 +138,7 @@ async fn add_education(
             )
         })?;
 
-    return Ok(Json(education));
+    Ok(Json(education))
 }
 
 pub trait EducationRoutable {

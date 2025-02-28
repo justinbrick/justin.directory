@@ -20,7 +20,7 @@ impl VisitMut for Scope {
         i.block.stmts.insert(
             0,
             syn::parse_quote! {
-                println!("Hello, world!");
+                tracing::warn!("Hello, world!");
             },
         );
     }
