@@ -15,14 +15,45 @@ use http::{request::Parts, HeaderValue, StatusCode};
 use jsonwebtoken::{decode, jwk::JwkSet, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
 use tower_http::auth::AsyncAuthorizeRequest;
+use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserContext {
     sub: String,
-    oid: String,
-    tid: String,
+    oid: Uuid,
+    tid: Uuid,
     iss: String,
     scp: String,
+}
+
+impl UserContext {}
+
+#[derive(Debug, Clone)]
+pub struct AuthenticationError {
+    pub status: StatusCode,
+    pub message: &'static str,
+}
+
+impl AuthenticationError {
+    pub fn unauthorized(str: &'static str) -> Self {
+        Self {
+            status: StatusCode::UNAUTHORIZED,
+            message: str,
+        }
+    }
+
+    pub fn forbidden(str: &'static str) -> Self {
+        Self {
+            status: StatusCode::FORBIDDEN,
+            message: str,
+        }
+    }
+}
+
+impl From<AuthenticationError> for (StatusCode, &'static str) {
+    fn from(err: AuthenticationError) -> Self {
+        (err.status, err.message)
+    }
 }
 
 #[derive(Clone)]
@@ -36,12 +67,9 @@ where
     type Rejection = (StatusCode, &'static str);
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        let Some(context) = parts.extensions.get::<UserContext>() else {
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                "you must be signed in to use this endpoint",
-            ));
-        };
+        let context = parts.extensions.get::<UserContext>().ok_or_else(|| {
+            AuthenticationError::unauthorized("you must be signed in to use this endpoint")
+        })?;
 
         Ok(User(context.clone()))
     }
@@ -135,14 +163,16 @@ async fn auth_logic<B>(
 }
 
 fn extract_auth_header(auth: &HeaderValue) -> Result<String, Response<Body>> {
-    let auth_str = auth
+    let [scheme, auth_str] = auth
         .to_str()
-        .map_err(|_| bad_auth("failed to parse auth header"))?;
-    let binding = auth_str.split(' ').collect::<Vec<_>>();
-    let [scheme, auth_str] = binding.as_slice() else {
-        return Err(bad_auth("invalid auth header"));
-    };
-    if *scheme != "Bearer" {
+        .map_err(|_| bad_auth("failed to parse auth header"))?
+        .split(' ')
+        .collect::<Vec<_>>()
+        .as_slice()
+        .try_into()
+        .map_err(|_| bad_auth("invalid auth header"))?;
+
+    if scheme != "Bearer" {
         return Err(bad_auth("invalid auth scheme"));
     }
 
