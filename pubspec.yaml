@@ -39,6 +39,10 @@ dependencies:
   oidc: ^0.9.0+1
   oidc_default_store: ^0.2.0+12
   go_router: ^14.8.1
+  provider: ^6.1.4
+  oidc_web_core: ^0.3.0+1
+  async: ^2.12.0
+  logging: ^1.3.0
 
 dev_dependencies:
   flutter_test:

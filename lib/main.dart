@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:go_router/go_router.dart';
+import 'package:portfolio/auth.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   usePathUrlStrategy();
@@ -31,28 +33,37 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: title,
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: seedColor,
-          brightness: Brightness.dark,
+    return AuthenticationLayout(
+      child: MaterialApp.router(
+        title: title,
+        darkTheme: ThemeData(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: seedColor,
+            brightness: Brightness.dark,
+          ),
         ),
+        theme: ThemeData(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(seedColor: seedColor),
+        ),
+        routerConfig: _router,
       ),
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: seedColor),
-      ),
-      routerConfig: _router,
     );
   }
 }
 
-class NavigationLayout extends StatelessWidget {
+class NavigationLayout extends StatefulWidget {
   const NavigationLayout({super.key, required this.child});
 
   final Widget child;
+
+  @override
+  State<NavigationLayout> createState() => _NavigationLayoutState();
+}
+
+class _NavigationLayoutState extends State<NavigationLayout> {
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -68,8 +79,14 @@ class NavigationLayout extends StatelessWidget {
       body: Row(
         children: [
           NavigationRail(
-            selectedIndex: 0,
-            onDestinationSelected: (int index) {},
+            backgroundColor: theme.colorScheme.surfaceBright,
+            selectedIconTheme: IconThemeData(color: theme.colorScheme.primary),
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (int index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
             labelType: NavigationRailLabelType.all,
             destinations: const [
               NavigationRailDestination(
@@ -82,7 +99,7 @@ class NavigationLayout extends StatelessWidget {
               ),
             ],
           ),
-          Expanded(child: child),
+          Expanded(child: widget.child),
         ],
       ),
     );
@@ -98,19 +115,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -118,7 +122,6 @@ class _MyHomePageState extends State<MyHomePage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           const Text('You have pushed the button this many times:'),
-          Text('$_counter', style: Theme.of(context).textTheme.headlineMedium),
         ],
       ),
     );
