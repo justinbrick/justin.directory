@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:go_router/go_router.dart';
 import 'package:portfolio/auth.dart';
-import 'package:provider/provider.dart';
 
 void main() {
   usePathUrlStrategy();
@@ -72,7 +71,7 @@ class _NavigationLayoutState extends State<NavigationLayout> {
       appBar: AppBar(
         title: const Text(MyApp.title),
         backgroundColor: theme.colorScheme.inversePrimary,
-        actions: [Icon(Icons.account_circle)],
+        actions: [UserIconWidget()],
         actionsPadding: const EdgeInsets.all(8),
         actionsIconTheme: const IconThemeData(size: 32),
       ),
